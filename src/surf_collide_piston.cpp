@@ -30,10 +30,22 @@ using namespace SPARTA_NS;
 SurfCollidePiston::SurfCollidePiston(SPARTA *sparta, int narg, char **arg) :
   SurfCollide(sparta, narg, arg)
 {
-  if (narg != 3) error->all(FLERR,"Illegal surf_collide piston command");
+  //if (narg != 3) error->all(FLERR,"Illegal surf_collide piston command");
+  parse_tsurf(arg[2]);
+  double vwall = tsurf;
+  //if (vwall <= 0.0) error->all(FLERR,"Surf_collide piston velocity <= 0.0");
 
-  vwall = input->numeric(FLERR,arg[2]);
-  if (vwall <= 0.0) error->all(FLERR,"Surf_collide piston velocity <= 0.0");
+  int iarg = 3;
+  while (iarg < narg) {
+    if (strcmp(arg[iarg],"temp/freq") == 0) {
+      if (iarg+2 > narg)
+        error->all(FLERR,"Illegal surf_collide piston command");
+      tfreq = atoi(arg[iarg+1]);
+      if (tfreq <= 0) error->all(FLERR,"Illegal surf_collide piston command");
+      iarg += 2;
+    }
+    else error->all(FLERR,"Illegal surf_collide piston command");
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -41,6 +53,8 @@ SurfCollidePiston::SurfCollidePiston(SPARTA *sparta, int narg, char **arg) :
 void SurfCollidePiston::init()
 {
   SurfCollide::init();
+
+  check_tsurf();
 
   dt = update->dt;
 
@@ -73,6 +87,8 @@ void SurfCollidePiston::init()
       }
   }
 
+
+
   if (flag) error->all(FLERR,"Surf_collide piston assigned to "
                        "surface with non axis-aligned normal");
 }
@@ -96,6 +112,7 @@ collide(Particle::OnePart *&ip, double &dtremain,
         int isurf, double *norm, int isr, int &reaction)
 {
   nsingle++;
+  double vwall = tsurf;
 
   // if surface chemistry defined, attempt reaction
   // reaction = 1 to N for which reaction took place, 0 for none

@@ -36,7 +36,6 @@ class SurfCollidePiston : public SurfCollide {
                              int, double *, int, int &);
 
  protected:
-  double vwall;
   double dt;
 };
 
